@@ -87,6 +87,13 @@ def _detect_transport_type_from_message(message_data: dict) -> str:
     ):
         logger.trace("Auto-detected: EXOTEL")
         return "exotel"
+    
+    # AudioFork detection
+    if ("audiofork" in message_data):
+        logger.trace("Auto-detected: AUDIOFORK")
+        return "audiofork"
+
+
 
     logger.trace("Auto-detection failed - unknown format")
     return "unknown"
