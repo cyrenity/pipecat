@@ -462,6 +462,13 @@ async def _create_telephony_transport(
             stream_sid=call_data["stream_id"],
             call_sid=call_data["call_id"],
         )
+    elif transport_type == "audiofork":
+        from pipecat.serializers.audiofork import AudioForkSerializer
+
+        params.serializer = AudioForkSerializer(
+            call_uuid=call_data["call_uuid"],
+            stream_id=call_data["stream_id"],
+        )
     else:
         raise ValueError(
             f"Unsupported telephony provider: {transport_type}. "
@@ -482,7 +489,7 @@ async def create_transport(
     Args:
         runner_args: Arguments from the runner.
         transport_params: Dict mapping transport names to parameter factory functions.
-            Keys should be: "daily", "webrtc", "twilio", "telnyx", "plivo", "exotel"
+            Keys should be: "daily", "webrtc", "twilio", "telnyx", "plivo", "exotel", "audiofork".
             Values should be functions that return transport parameters when called.
 
     Returns:
@@ -528,6 +535,11 @@ async def create_transport(
                 audio_out_enabled=True,
                 vad_analyzer=SileroVADAnalyzer(),
                 # add_wav_header and serializer will be set automatically
+            ),
+            "audiofork": lambda: FastAPIWebsocketParams(
+                audio_in_enabled=True,
+                audio_out_enabled=True,
+                vad_analyzer=SileroVADAnalyzer(),
             ),
         }
 
