@@ -161,13 +161,14 @@ class AudioForkSerializer(FrameSerializer):
             json_data = json.loads(data)
 
             # Check if it's a structured message with type
-            if isinstance(json_data, dict) and "action" in json_data:
-                msg_type = json_data["action"]
+            if isinstance(json_data, dict) and "type" in json_data:
+                msg_type = json_data["type"]
 
                 # Handle metadata message
                 if msg_type == "dtmf":
-                    digit = message.get("dtmf", {}).get("digit")
+                    digit = json_data["digit"]
                     try:
+                        # Convert string to enum value
                         return InputDTMFFrame(KeypadEntry(digit))
                     except ValueError:
                         # Handle case where string doesn't match any enum value
