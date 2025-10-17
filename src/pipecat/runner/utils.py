@@ -87,13 +87,11 @@ def _detect_transport_type_from_message(message_data: dict) -> str:
     ):
         logger.trace("Auto-detected: EXOTEL")
         return "exotel"
-    
+
     # AudioFork detection
-    if ("audiofork" in message_data):
+    if "call_uuid" in message_data:
         logger.trace("Auto-detected: AUDIOFORK")
         return "audiofork"
-
-
 
     logger.trace("Auto-detection failed - unknown format")
     return "unknown"
@@ -160,12 +158,16 @@ async def parse_telephony_websocket(websocket: WebSocket):
         except json.JSONDecodeError:
             first_message = {}
 
-        # Second message
-        second_message_raw = await start_data.__anext__()
-        logger.trace(f"Second message: {second_message_raw}")
         try:
-            second_message = json.loads(second_message_raw)
-        except json.JSONDecodeError:
+            # Second message
+            second_message_raw = await start_data.__anext__()
+            logger.trace(f"Second message: {second_message_raw}")
+            try:
+                second_message = json.loads(second_message_raw)
+            except json.JSONDecodeError:
+                second_message = {}
+        except Exception as e:
+            logger.error(f"Error parsing second message: {e}")
             second_message = {}
 
         # Try auto-detection on both messages
@@ -224,6 +226,11 @@ async def parse_telephony_websocket(websocket: WebSocket):
                 "from": start_data.get("from", ""),
                 "to": start_data.get("to", ""),
             }
+        elif transport_type == "audiofork":
+            call_data = {
+                "call_uuid": call_data_raw.get("call_uuid"),
+                "stream_id": call_data_raw.get("stream_id"),
+            }
 
         else:
             call_data = {}
@@ -232,7 +239,7 @@ async def parse_telephony_websocket(websocket: WebSocket):
         return transport_type, call_data
 
     except Exception as e:
-        logger.error(f"Error parsing telephony WebSocket: {e}")
+        logger.error(f"Error parsing telephony WebSocket: {e.__str__()}")
         raise
 
 
